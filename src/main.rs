@@ -6,7 +6,12 @@ fn main() {
     let mut args = std::env::args();
     args.next(); // Skip arg 0
     if let Some(arg) = args.next() {
-        match arg.parse::<usize>().ok().and_then(|i| funcs.get(i)) {
+        match arg
+            .parse::<usize>()
+            .ok()
+            .and_then(|i| i.checked_sub(1))
+            .and_then(|i| funcs.get(i))
+        {
             Some(func) => func(),
             _ => println!("could not run {}", arg),
         }
