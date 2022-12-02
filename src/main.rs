@@ -1,7 +1,10 @@
 mod day01;
+mod day02;
 
 fn main() {
-    let funcs = vec![day01::main];
+    let mut funcs: Vec<fn()> = Vec::new();
+    funcs.push(day01::main);
+    funcs.push(day02::main);
 
     let mut args = std::env::args();
     args.next(); // Skip arg 0
