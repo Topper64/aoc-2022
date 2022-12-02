@@ -1,47 +1,56 @@
+use std::ops::BitOr;
+use std::str::FromStr;
+
+#[derive(Debug, PartialEq)]
+struct InputError;
+
 #[derive(Debug, PartialEq)]
 enum Rps {
-    Rock,
-    Paper,
-    Scissors,
+    Rock = 1,
+    Paper = 2,
+    Scissors = 3,
 }
 
-impl Rps {
-    fn value(&self) -> i32 {
-        match self {
-            Rps::Rock => 1,
-            Rps::Paper => 2,
-            Rps::Scissors => 3,
+impl FromStr for Rps {
+    type Err = InputError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "A" | "X" => Ok(Rps::Rock),
+            "B" | "Y" => Ok(Rps::Paper),
+            "C" | "Z" => Ok(Rps::Scissors),
+            _ => Err(InputError),
         }
     }
+}
 
-    pub fn plays(&self, other: &Rps) -> i32 {
-        let score = match (self, other) {
-            (Rps::Rock, Rps::Paper) => 0,
-            (Rps::Paper, Rps::Scissors) => 0,
-            (Rps::Scissors, Rps::Rock) => 0,
-            (Rps::Rock, Rps::Scissors) => 6,
-            (Rps::Paper, Rps::Rock) => 6,
-            (Rps::Scissors, Rps::Paper) => 6,
-            _ => 3,
-        };
-        score + self.value()
+#[derive(Debug, PartialEq)]
+enum Outcome {
+    Loss = 0,
+    Draw = 3,
+    Win = 6,
+}
+
+impl BitOr for &Rps {
+    type Output = Outcome;
+
+    fn bitor(self, other: Self) -> Self::Output {
+        match (self, other) {
+            (Rps::Rock, Rps::Paper) => Outcome::Loss,
+            (Rps::Paper, Rps::Scissors) => Outcome::Loss,
+            (Rps::Scissors, Rps::Rock) => Outcome::Loss,
+            (Rps::Rock, Rps::Scissors) => Outcome::Win,
+            (Rps::Paper, Rps::Rock) => Outcome::Win,
+            (Rps::Scissors, Rps::Paper) => Outcome::Win,
+            _ => Outcome::Draw,
+        }
     }
 }
 
 fn parse(line: &str) -> (Rps, Rps) {
     let (left, right) = line.split_once(" ").expect("invalid input");
-    let left = match left {
-        "A" => Rps::Rock,
-        "B" => Rps::Paper,
-        "C" => Rps::Scissors,
-        _ => panic!("invalid input"),
-    };
-    let right = match right {
-        "X" => Rps::Rock,
-        "Y" => Rps::Paper,
-        "Z" => Rps::Scissors,
-        _ => panic!("invalid input"),
-    };
+    let left = left.parse().expect("invalid input");
+    let right = right.parse().expect("invalid input");
     (left, right)
 }
 
@@ -49,7 +58,7 @@ fn part1(input: &str) -> i32 {
     input
         .lines()
         .map(parse)
-        .map(|(them, you)| you.plays(&them))
+        .map(|(them, you)| (&you | &them) as i32 + you as i32)
         .sum()
 }
 
