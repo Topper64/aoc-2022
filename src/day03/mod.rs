@@ -8,21 +8,49 @@ fn priority(c: char) -> i32 {
     }
 }
 
-fn find_duplicate(items: &str) -> char {
+fn find_duplicate<It>(mut bags: Vec<It>) -> Option<char>
+where
+    It: Iterator<Item = char>,
+{
+    let mut result: Option<HashSet<_>> = None;
+    for bag in bags.iter_mut().map(|b| b.collect()) {
+        result = match result {
+            None => Some(bag),
+            Some(so_far) => Some(so_far.intersection(&bag).map(|c| *c).collect()),
+        }
+    }
+    match result {
+        Some(result) if result.len() == 1 => Some(*result.iter().next().unwrap()),
+        _ => None,
+    }
+}
+
+fn search_bag(items: &str) -> char {
     let len = items.len();
-    let mut items = items.chars();
-    let left: HashSet<_> = items.by_ref().take(len / 2).collect();
-    let right: HashSet<_> = items.collect();
-    *left.intersection(&right).next().unwrap()
+    let left = items.get(..len / 2).unwrap().chars();
+    let right = items.get(len / 2..).unwrap().chars();
+    find_duplicate(vec![left, right]).unwrap()
 }
 
 fn part1(input: &str) -> i32 {
-    input.lines().map(find_duplicate).map(priority).sum()
+    input.lines().map(search_bag).map(priority).sum()
+}
+
+fn part2(input: &str) -> i32 {
+    let mut lines = input.lines();
+    let mut result = 0;
+    loop {
+        match find_duplicate(lines.by_ref().take(3).map(|e| e.chars()).collect()) {
+            Some(sticker) => result += priority(sticker),
+            None => break result,
+        }
+    }
 }
 
 pub fn main() {
     let input = include_str!("input.txt");
     println!("part 1: {}", part1(input));
+    println!("part 2: {}", part2(input));
 }
 
 #[cfg(test)]
@@ -40,5 +68,10 @@ mod test {
     #[test]
     fn test_part1() {
         assert_eq!(part1(INPUT), 157);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(INPUT), 70);
     }
 }
