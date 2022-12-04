@@ -10,6 +10,16 @@ impl<T: PartialOrd> Preorder for Range<T> {
     }
 }
 
+trait Connected {
+    fn connected(&self, other: &Self) -> bool;
+}
+
+impl<T: PartialOrd> Connected for Range<T> {
+    fn connected(&self, other: &Self) -> bool {
+        other.start <= self.end && self.start <= other.end
+    }
+}
+
 fn parse_line(line: &str) -> (Range<i32>, Range<i32>) {
     let (left, right) = line.split_once(",").unwrap();
     let (a, b) = left.split_once("-").unwrap();
@@ -20,18 +30,30 @@ fn parse_line(line: &str) -> (Range<i32>, Range<i32>) {
     )
 }
 
-fn part1(input: &str) -> usize {
+fn process<F>(input: &str, func: F) -> usize
+where
+    F: FnMut((Range<i32>, Range<i32>)) -> bool,
+{
     input
         .lines()
         .map(parse_line)
-        .map(|(a, b)| a.preceeds(&b) || b.preceeds(&a))
+        .map(func)
         .filter(|x| *x)
         .count()
+}
+
+fn part1(input: &str) -> usize {
+    process(input, |(a, b)| a.preceeds(&b) || b.preceeds(&a))
+}
+
+fn part2(input: &str) -> usize {
+    process(input, |(a, b)| a.connected(&b) || b.connected(&a))
 }
 
 pub fn main() {
     let input = include_str!("input.txt");
     println!("part 1: {}", part1(input));
+    println!("part 2: {}", part2(input));
 }
 
 #[cfg(test)]
@@ -50,5 +72,10 @@ mod test {
     #[test]
     fn test_part1() {
         assert_eq!(part1(INPUT), 2);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(INPUT), 4);
     }
 }
