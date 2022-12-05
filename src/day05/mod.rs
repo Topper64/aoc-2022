@@ -1,9 +1,21 @@
-use std::collections::HashMap;
 use std::str::Lines;
 
 #[derive(Debug, PartialEq)]
 struct Stacks {
-    stacks: HashMap<char, Vec<char>>,
+    stacks: Vec<Vec<char>>,
+}
+
+impl Stacks {
+    pub fn tops(&self) -> String {
+        self.stacks.iter().map(|s| s.last().unwrap()).collect()
+    }
+
+    pub fn rearrange(&mut self, count: usize, from: usize, to: usize) {
+        for _ in 0..count {
+            let item = self.stacks.get_mut(from).unwrap().pop().unwrap();
+            self.stacks.get_mut(to).unwrap().push(item);
+        }
+    }
 }
 
 impl From<&mut Lines<'_>> for Stacks {
@@ -21,21 +33,41 @@ impl From<&mut Lines<'_>> for Stacks {
             }
         }
 
-        // Extract the numbers from the (current) top of each stack
-        let keys: Vec<_> = stacks.iter_mut().map(|v| v.pop().unwrap()).collect();
-
         // Flip stacks so the top crate is actually on top
         let stacks = stacks
             .into_iter()
-            .map(|v| v.into_iter().rev().filter(|c| c != &' ').collect());
+            .map(|v| v.into_iter().rev().skip(1).filter(|c| c != &' ').collect());
 
         Stacks {
-            stacks: keys.into_iter().zip(stacks).collect(),
+            stacks: stacks.collect(),
         }
     }
 }
 
-pub fn main() {}
+fn part1(input: &str) -> String {
+    let mut lines = input.lines();
+    let mut stacks = Stacks::from(&mut lines);
+
+    for line in lines {
+        let mut numbers = line
+            .split_whitespace()
+            .skip(1)
+            .step_by(2)
+            .map(|c| c.parse().unwrap());
+        stacks.rearrange(
+            numbers.next().unwrap(),
+            numbers.next().unwrap() - 1,
+            numbers.next().unwrap() - 1,
+        );
+    }
+
+    stacks.tops()
+}
+
+pub fn main() {
+    let input = include_str!("input.txt");
+    println!("part 1: {}", part1(input));
+}
 
 #[cfg(test)]
 mod test {
@@ -45,11 +77,12 @@ mod test {
 
     #[test]
     fn test_parse_stacks() {
-        let expected = HashMap::from([
-            ('1', vec!['Z', 'N']),
-            ('2', vec!['M', 'C', 'D']),
-            ('3', vec!['P']),
-        ]);
+        let expected = vec![vec!['Z', 'N'], vec!['M', 'C', 'D'], vec!['P']];
         assert_eq!(Stacks::from(&mut INPUT.lines()).stacks, expected);
+    }
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1(INPUT), "CMZ");
     }
 }
