@@ -122,7 +122,15 @@ fn parse_input(input: &str) -> File {
     root
 }
 
-pub fn main() {}
+fn part1(input: &str) -> usize {
+    let root = parse_input(input);
+    root.size
+}
+
+pub fn main() {
+    let input = include_str!("input.txt");
+    println!("part 1: {}", part1(input));
+}
 
 #[cfg(test)]
 mod test {
