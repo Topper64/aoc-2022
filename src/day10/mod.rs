@@ -46,9 +46,30 @@ fn part1(input: &str) -> i32 {
     total
 }
 
+fn part2(input: &str) -> String {
+    let mut rows = Vec::new();
+    for (x, cycle) in Program::from(input).zip(0..) {
+        let scanline = cycle % 40;
+        if scanline == 0 {
+            let mut row = Vec::with_capacity(41);
+            row.push('\n');
+            rows.push(row);
+        }
+
+        rows.last_mut().unwrap().push(match scanline - x {
+            -1 | 0 | 1 => '#',
+            _ => '.',
+        });
+    }
+    rows.iter()
+        .map(|row| row.iter().collect::<String>())
+        .collect()
+}
+
 pub fn main() {
     let input = include_str!("input.txt");
     println!("part 1: {}", part1(input));
+    println!("part 2: {}", part2(input));
 }
 
 #[cfg(test)]
