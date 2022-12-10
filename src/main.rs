@@ -7,6 +7,7 @@ mod day06;
 mod day07;
 mod day08;
 mod day09;
+mod day10;
 
 fn main() {
     let funcs: Vec<fn()> = vec![
@@ -19,6 +20,7 @@ fn main() {
         day07::main,
         day08::main,
         day09::main,
+        day10::main,
     ];
 
     let mut args = std::env::args();
