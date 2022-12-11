@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::str::FromStr;
 
 #[derive(Debug)]
@@ -73,6 +74,25 @@ struct Monkey {
     count: usize,
 }
 
+impl Monkey {
+    pub fn turn(&mut self) -> HashMap<usize, Vec<usize>> {
+        let mut result = HashMap::new();
+        for item in self.items.drain(..) {
+            self.count += 1;
+            let item = self.update.call(item) / 3;
+            let target = match item % self.test == 0 {
+                true => self.target.0,
+                false => self.target.1,
+            };
+            result
+                .entry(target)
+                .or_insert_with(|| Vec::new())
+                .push(item);
+        }
+        result
+    }
+}
+
 impl FromStr for Monkey {
     type Err = ParseError;
 
@@ -133,6 +153,24 @@ impl FromStr for Monkey {
 #[derive(Debug)]
 struct Monkeys(Vec<Monkey>);
 
+impl Monkeys {
+    pub fn round(&mut self) {
+        for i in 0..self.0.len() {
+            let throws = self.0[i].turn();
+            for (target, items) in throws.iter() {
+                self.0[*target].items.extend(items);
+            }
+        }
+    }
+
+    pub fn business(&self) -> usize {
+        let mut counts: Vec<_> = self.0.iter().map(|monkey| monkey.count).collect();
+        counts.sort();
+        counts.reverse();
+        counts[0] * counts[1]
+    }
+}
+
 impl FromStr for Monkeys {
     type Err = ParseError;
 
@@ -145,13 +183,37 @@ impl FromStr for Monkeys {
     }
 }
 
-fn part1(input: &str) {
+fn part1(input: &str) -> usize {
     let mut monkeys: Monkeys = input.parse().expect("could not parse monkeys");
-    println!("{:?}", monkeys);
+    for _ in 0..20 {
+        monkeys.round();
+    }
+    monkeys.business()
 }
 
 pub fn main() {
     let input = include_str!("input.txt");
-    part1(input);
-    // println!("part 1: {}", part1(input));
+    println!("part 1: {}", part1(input));
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    const INPUT: &str = include_str!("test.txt");
+
+    #[test]
+    fn test_round() {
+        let mut monkeys: Monkeys = INPUT.parse().expect("could not parse monkeys");
+        monkeys.round();
+        assert_eq!(monkeys.0[0].items, vec![20, 23, 27, 26]);
+        assert_eq!(monkeys.0[1].items, vec![2080, 25, 167, 207, 401, 1046]);
+        assert_eq!(monkeys.0[2].items, Vec::new());
+        assert_eq!(monkeys.0[3].items, Vec::new());
+    }
+
+    #[test]
+    fn test_part1() {
+        assert_eq!(part1(INPUT), 10605);
+    }
 }
