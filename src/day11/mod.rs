@@ -75,11 +75,11 @@ struct Monkey {
 }
 
 impl Monkey {
-    pub fn turn(&mut self) -> HashMap<usize, Vec<usize>> {
+    pub fn turn(&mut self, worry: usize) -> HashMap<usize, Vec<usize>> {
         let mut result = HashMap::new();
         for item in self.items.drain(..) {
             self.count += 1;
-            let item = self.update.call(item) / 3;
+            let item = self.update.call(item) / worry;
             let target = match item % self.test == 0 {
                 true => self.target.0,
                 false => self.target.1,
@@ -154,9 +154,27 @@ impl FromStr for Monkey {
 struct Monkeys(Vec<Monkey>);
 
 impl Monkeys {
-    pub fn round(&mut self) {
+    pub fn rounds(&mut self, n: usize, worry: usize) -> usize {
+        // We will work mod m
+        let m: usize = self.0.iter().map(|monkey| monkey.test).product();
+
+        for _ in 0..n {
+            self.round(worry);
+
+            // Keep numbers in range
+            for monkey in self.0.iter_mut() {
+                for item in monkey.items.iter_mut() {
+                    *item %= m;
+                }
+            }
+        }
+
+        self.business()
+    }
+
+    pub fn round(&mut self, worry: usize) {
         for i in 0..self.0.len() {
-            let throws = self.0[i].turn();
+            let throws = self.0[i].turn(worry);
             for (target, items) in throws.iter() {
                 self.0[*target].items.extend(items);
             }
@@ -185,15 +203,18 @@ impl FromStr for Monkeys {
 
 fn part1(input: &str) -> usize {
     let mut monkeys: Monkeys = input.parse().expect("could not parse monkeys");
-    for _ in 0..20 {
-        monkeys.round();
-    }
-    monkeys.business()
+    monkeys.rounds(20, 3)
+}
+
+fn part2(input: &str) -> usize {
+    let mut monkeys: Monkeys = input.parse().expect("could not parse monkeys");
+    monkeys.rounds(10000, 1)
 }
 
 pub fn main() {
     let input = include_str!("input.txt");
     println!("part 1: {}", part1(input));
+    println!("part 2: {}", part2(input));
 }
 
 #[cfg(test)]
@@ -205,7 +226,7 @@ mod test {
     #[test]
     fn test_round() {
         let mut monkeys: Monkeys = INPUT.parse().expect("could not parse monkeys");
-        monkeys.round();
+        monkeys.round(3);
         assert_eq!(monkeys.0[0].items, vec![20, 23, 27, 26]);
         assert_eq!(monkeys.0[1].items, vec![2080, 25, 167, 207, 401, 1046]);
         assert_eq!(monkeys.0[2].items, Vec::new());
@@ -215,5 +236,10 @@ mod test {
     #[test]
     fn test_part1() {
         assert_eq!(part1(INPUT), 10605);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(INPUT), 2713310158);
     }
 }
