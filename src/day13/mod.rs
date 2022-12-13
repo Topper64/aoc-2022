@@ -80,11 +80,16 @@ impl Ord for Packet {
     }
 }
 
-fn part1(input: &str) -> usize {
-    let mut packets = input
+fn parse_input(input: &str) -> Vec<Packet> {
+    input
         .lines()
         .filter(|s| !s.is_empty())
-        .map(|s| s.parse::<Packet>().unwrap());
+        .map(|s| s.parse::<Packet>().unwrap())
+        .collect()
+}
+
+fn part1(input: &str) -> usize {
+    let mut packets = parse_input(input).into_iter();
     iter::from_fn(|| packets.next().zip(packets.next()))
         .zip(1..)
         .filter_map(|((l, r), i)| match l < r {
@@ -94,9 +99,27 @@ fn part1(input: &str) -> usize {
         .sum()
 }
 
+fn part2(input: &str) -> usize {
+    let mut packets = parse_input(input);
+    packets.sort();
+
+    // Find where the first divider would be, and add 1 because we're indexing
+    // from 1 instead of 0
+    let div1 = Packet::List(vec![Packet::List(vec![Packet::Int(2)])]);
+    let i = packets.binary_search(&div1).err().unwrap() + 1;
+
+    // Find where the second divider would be, but now need to add 2 because it
+    // would appear after the first
+    let div2 = Packet::List(vec![Packet::List(vec![Packet::Int(6)])]);
+    let j = packets.binary_search(&div2).err().unwrap() + 2;
+
+    i * j
+}
+
 pub fn main() {
     let input = include_str!("input.txt");
     println!("part 1: {}", part1(input));
+    println!("part 2: {}", part2(input));
 }
 
 #[cfg(test)]
@@ -130,5 +153,10 @@ mod test {
     #[test]
     fn test_part1() {
         assert_eq!(part1(INPUT), 13);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(INPUT), 140);
     }
 }
