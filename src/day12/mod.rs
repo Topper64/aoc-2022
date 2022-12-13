@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 fn walk<F>(input: &str, from: F) -> usize
 where
-    F: Fn(char) -> bool
+    F: Fn(char) -> bool,
 {
     // Parse input
     let mut changed = HashSet::new();
