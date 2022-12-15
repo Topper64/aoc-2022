@@ -74,7 +74,7 @@ impl<T: Default> Grid<T> {
     }
 }
 
-fn part1(input: &str) -> usize {
+fn parse_input(input: &str) -> Grid<bool> {
     let mut grid = Grid::new();
     for line in input.lines() {
         line.split(" -> ")
@@ -97,12 +97,16 @@ fn part1(input: &str) -> usize {
     }
 
     // Ensure top is at 0
-    let spawn = (500, 0);
-    grid.insert(spawn.0, spawn.1, false);
+    grid.insert(500, 0, false);
 
+    grid
+}
+
+fn simulate(mut grid: Grid<bool>) -> usize {
     let mut count = 0;
     loop {
-        let (mut x, mut y) = spawn;
+        let mut x = 500;
+        let mut y = 0;
 
         // Loop as long as it is possible to place the sand
         while grid.get(x, y) == Some(&false) {
@@ -117,20 +121,40 @@ fn part1(input: &str) -> usize {
             };
         }
 
-        // Check if it fell out of bounds
-        if grid.get(x, y).is_none() {
+        if grid.get(x, y) == Some(&false) {
+            // Can place
+            grid.insert(x, y, true);
+            count += 1;
+        } else {
+            // Either fell out of bounds or the spawn point was blocked
             break count;
         }
-
-        // Update for next iteration
-        grid.insert(x, y, true);
-        count += 1;
     }
+}
+
+fn part1(input: &str) -> usize {
+    simulate(parse_input(input))
+}
+
+fn part2(input: &str) -> usize {
+    let mut grid = parse_input(input);
+
+    // Insert the floor.  Theoretically infinitely long but 2*height is sufficient.
+    let bottom = grid.bottom + 1;
+    let height = grid.bottom - grid.top + 2;
+    let left = 500 - height;
+    let right = 500 + height;
+    for x in left..=right {
+        grid.insert(x, bottom, true);
+    }
+
+    simulate(grid)
 }
 
 pub fn main() {
     let input = include_str!("input.txt");
     println!("part 1: {}", part1(input));
+    println!("part 2: {}", part2(input));
 }
 
 #[cfg(test)]
@@ -142,5 +166,10 @@ mod test {
     #[test]
     fn test_part1() {
         assert_eq!(part1(INPUT), 24);
+    }
+
+    #[test]
+    fn test_part2() {
+        assert_eq!(part2(INPUT), 93);
     }
 }
